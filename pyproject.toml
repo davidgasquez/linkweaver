@@ -1,16 +1,17 @@
 [project]
 name = "linkweaver"
-version = "0.1.0"
-description = "Extract URLs from markdown files and fetch their content into a consolidated document"
+version = "0.2.0"
+description = "Extract URLs from markdown files and process them: save as resource folders, list all links, or concatenate with resources in XML format"
 readme = "README.md"
 authors = [{ name = "David Gasquez", email = "davidgasquez@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
     "markitdown[audio-transcription,pdf,youtube-transcription]>=0.1.2",
+    "requests>=2.32.0",
 ]
 
 [project.scripts]
-lw = "linkweaver:cli"
+linkweaver = "linkweaver:cli"
 
 [build-system]
 requires = ["setuptools"]

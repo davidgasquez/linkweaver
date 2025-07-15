@@ -217,14 +217,18 @@ wheels = [
 
 [[package]]
 name = "linkweaver"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "markitdown", extra = ["audio-transcription", "pdf", "youtube-transcription"] },
+    { name = "requests" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "markitdown", extras = ["audio-transcription", "pdf", "youtube-transcription"], specifier = ">=0.1.2" }]
+requires-dist = [
+    { name = "markitdown", extras = ["audio-transcription", "pdf", "youtube-transcription"], specifier = ">=0.1.2" },
+    { name = "requests", specifier = ">=2.32.0" },
+]
 
 [[package]]
 name = "magika"
