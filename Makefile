@@ -6,6 +6,12 @@
 setup: .uv
 	uv sync --frozen
 
+build:
+	uv build
+
+publish: build
+	uv publish
+
 lint:
 	uvx ruff check
 	uvx ty check
