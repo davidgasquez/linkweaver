@@ -1,6 +1,6 @@
 # Link Weaver 🕸️
 
-Extract URLs from markdown files and process them with three powerful modes: save as organized resource folders, list all links, or concatenate with resources in XML format!
+Extract URLs from markdown files and convert them to individual markdown documents. Link Weaver is a CLI tool that finds all URLs in your markdown files, fetches their content, converts to markdown, and saves each as a separate file in organized resource folders.
 
 ## ✨ Features
 
