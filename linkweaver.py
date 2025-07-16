@@ -1,5 +1,6 @@
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -35,8 +36,9 @@ def url_to_filename(url: str) -> str:
     """Convert URL to a clean filename."""
     parsed = urlparse(url)
 
-    # Start with domain
+    # Start with domain, replacing dots with hyphens
     filename = parsed.netloc or "unknown-domain"
+    filename = filename.replace(".", "-")
 
     # Add path, replacing slashes and special chars with hyphens
     if parsed.path and parsed.path != "/":
@@ -55,7 +57,9 @@ def url_to_filename(url: str) -> str:
     return f"{filename}.md"
 
 
-def fetch_and_save_urls(urls: set[str], output_dir: Path) -> None:
+def fetch_and_save_urls(
+    urls: set[str], output_dir: Path, exec_cmd: str | None = None
+) -> None:
     """Fetch content from URLs and save each as individual markdown files."""
     if not urls:
         print("No URLs found to process.")
@@ -81,6 +85,26 @@ def fetch_and_save_urls(urls: set[str], output_dir: Path) -> None:
 
             # Add metadata header to the markdown file
             full_content = f"# {title}\n\n**Source:** {url}\n\n{content}"
+
+            # Process content through exec command if provided
+            if exec_cmd:
+                try:
+                    result = subprocess.run(
+                        exec_cmd,
+                        shell=True,
+                        input=full_content,
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                        timeout=60,
+                    )
+                    full_content = result.stdout
+                except subprocess.CalledProcessError as e:
+                    print(f"  Warning: exec command failed: {e}")
+                    print("  Using original content")
+                except subprocess.TimeoutExpired:
+                    print("  Warning: exec command timed out after 30s")
+                    print("  Using original content")
 
             output_path.write_text(full_content, encoding="utf-8")
             print(f"✓ Saved: {filename}")
@@ -157,7 +181,7 @@ def list_links(input_files: list[Path]) -> None:
         print(url)
 
 
-def process_files(input_files: list[Path]) -> None:
+def process_files(input_files: list[Path], exec_cmd: str | None = None) -> None:
     """Process input files and save URL content to resource folders."""
     all_urls = set()
 
@@ -195,7 +219,7 @@ def process_files(input_files: list[Path]) -> None:
         file_urls = extract_urls(content)
 
         if file_urls:
-            fetch_and_save_urls(file_urls, resource_dir)
+            fetch_and_save_urls(file_urls, resource_dir, exec_cmd)
         else:
             print("No URLs to process for this file.")
 
@@ -222,6 +246,12 @@ def cli() -> None:
         action="store_true",
         help="Concatenate all markdown files in the specified folder(s)",
     )
+    _ = parser.add_argument(
+        "-x",
+        "--exec",
+        dest="exec_cmd",
+        help="Execute a shell command on the markdown output before saving (e.g., 'llm -t mdclean')",
+    )
 
     args = parser.parse_args()
 
@@ -230,7 +260,7 @@ def cli() -> None:
     elif args.xml_cat:
         xml_cat_files(args.input_files)
     else:
-        process_files(args.input_files)
+        process_files(args.input_files, args.exec_cmd)
 
 
 if __name__ == "__main__":
