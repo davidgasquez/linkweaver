@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 
 [[package]]
@@ -217,18 +217,14 @@ wheels = [
 
 [[package]]
 name = "linkweaver"
-version = "0.4.1"
+version = "0.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "markitdown", extra = ["audio-transcription", "pdf", "youtube-transcription"] },
-    { name = "requests" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "markitdown", extras = ["audio-transcription", "pdf", "youtube-transcription"], specifier = ">=0.1.2" },
-    { name = "requests", specifier = ">=2.32.0" },
-]
+requires-dist = [{ name = "markitdown", extras = ["audio-transcription", "pdf", "youtube-transcription"], specifier = ">=0.1.2" }]
 
 [[package]]
 name = "magika"

@@ -1,6 +1,6 @@
 [project]
 name = "linkweaver"
-version = "0.5.0"
+version = "0.6.0"
 description = "Extract URLs from markdown files and convert them to individual markdown documents."
 readme = "README.md"
 authors = [{ name = "David Gasquez", email = "davidgasquez@gmail.com" }]

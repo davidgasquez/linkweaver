@@ -6,12 +6,19 @@
 setup: .uv
 	uv sync --frozen
 
+.PHONY: build
 build:
 	uv build
 
+.PHONY: test
+test:
+	uv run -m unittest discover -s tests
+
+.PHONY: publish
 publish: build
 	uv publish
 
+.PHONY: lint
 lint:
 	uvx ruff check
-	uvx ty check
+	uv run --with ty ty check
