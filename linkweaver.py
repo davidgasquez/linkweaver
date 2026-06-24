@@ -8,7 +8,11 @@ from pathlib import Path
 from urllib import request
 from urllib.parse import urlparse
 
+import requests
 from markitdown import MarkItDown  # type: ignore[unresolved-import]
+
+REQUEST_TIMEOUT = 30
+USER_AGENT = "linkweaver"
 
 PLAINTEXT_EXTENSIONS = {
     ".adoc",
@@ -282,9 +286,59 @@ def _is_plaintext_content_type(content_type: str) -> bool:
     return content_type.startswith("text/") or content_type in PLAINTEXT_CONTENT_TYPES
 
 
+class TimeoutSession(requests.Session):
+    def request(
+        self,
+        method,
+        url,
+        params=None,
+        data=None,
+        headers=None,
+        cookies=None,
+        files=None,
+        auth=None,
+        timeout=None,
+        allow_redirects=True,
+        proxies=None,
+        hooks=None,
+        stream=None,
+        verify=None,
+        cert=None,
+        json=None,
+    ):
+        return super().request(
+            method,
+            url,
+            params=params,
+            data=data,
+            headers=headers,
+            cookies=cookies,
+            files=files,
+            auth=auth,
+            timeout=REQUEST_TIMEOUT if timeout is None else timeout,
+            allow_redirects=allow_redirects,
+            proxies=proxies,
+            hooks=hooks,
+            stream=stream,
+            verify=verify,
+            cert=cert,
+            json=json,
+        )
+
+
+def _new_requests_session() -> requests.Session:
+    session = TimeoutSession()
+    session.headers.update({"User-Agent": USER_AGENT})
+    return session
+
+
+def _new_markitdown() -> MarkItDown:
+    return MarkItDown(enable_builtins=True, requests_session=_new_requests_session())
+
+
 def _fetch_plaintext(url: str) -> str:
-    url_request = request.Request(url, headers={"User-Agent": "linkweaver"})
-    with request.urlopen(url_request, timeout=30) as response:
+    url_request = request.Request(url, headers={"User-Agent": USER_AGENT})
+    with request.urlopen(url_request, timeout=REQUEST_TIMEOUT) as response:
         content_type = response.headers.get_content_type()
         if not _is_plaintext_content_type(content_type):
             raise NonPlaintextResponseError(
@@ -305,7 +359,7 @@ def _convert_url(md: MarkItDown | None, url: str) -> str:
             pass
 
     if md is None:
-        md = MarkItDown(enable_builtins=True)
+        md = _new_markitdown()
 
     result = md.convert(url)
     title = result.title or "Untitled"
@@ -393,7 +447,7 @@ def fetch_and_save_urls(
             continue
 
         if not _is_plaintext_url(url) and md is None:
-            md = MarkItDown(enable_builtins=True)
+            md = _new_markitdown()
 
         try:
             output = _fetch_with_retries(md, url, max_retries, verbose and not quiet)

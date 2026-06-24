@@ -11,23 +11,25 @@ import linkweaver
 
 
 class FakeMarkItDown:
-    def __init__(self, enable_builtins: bool) -> None:
+    def __init__(self, enable_builtins: bool, **kwargs: object) -> None:
         self.enable_builtins = enable_builtins
+        self.kwargs = kwargs
 
     def convert(self, url: str) -> SimpleNamespace:
         return SimpleNamespace(title="Fetched", markdown=f"content from {url}")
 
 
 class EmptyMarkItDown:
-    def __init__(self, enable_builtins: bool) -> None:
+    def __init__(self, enable_builtins: bool, **kwargs: object) -> None:
         self.enable_builtins = enable_builtins
+        self.kwargs = kwargs
 
     def convert(self, url: str) -> SimpleNamespace:
         return SimpleNamespace(title="Empty", markdown="")
 
 
 class FailingMarkItDown:
-    def __init__(self, enable_builtins: bool) -> None:
+    def __init__(self, enable_builtins: bool, **kwargs: object) -> None:
         raise AssertionError("MarkItDown should not be used for plaintext URLs")
 
 
@@ -142,6 +144,19 @@ class LinkWeaverTests(unittest.TestCase):
             self.assertTrue(error_file.exists())
             content = error_file.read_text(encoding="utf-8")
             self.assertIn("converted markdown content is empty", content)
+
+    def test_markitdown_requests_use_timeout_and_user_agent(self) -> None:
+        session = linkweaver._new_requests_session()
+        response = linkweaver.requests.Response()
+        response.status_code = 200
+
+        self.assertEqual(session.headers["User-Agent"], linkweaver.USER_AGENT)
+        with patch.object(
+            linkweaver.requests.Session, "request", return_value=response
+        ) as request_mock:
+            self.assertIs(session.get("https://example.com"), response)
+
+        self.assertEqual(request_mock.call_args.kwargs["timeout"], 30)
 
     def test_plaintext_fetch_saves_raw_content_without_markitdown(self) -> None:
         def fake_urlopen(url_request: object, timeout: int) -> FakeResponse:
